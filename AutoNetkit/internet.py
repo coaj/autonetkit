@@ -428,7 +428,8 @@ class Internet:
                     host_alias = host_alias,
                     parallel = data['parallel'],
                     telnet_start_port = data['telnet start port'],
-                    network = self.network, base_image = data['base image'])
+                    network = self.network, base_image = data['base image'],
+		    rpki_base_image = data['rpki base image'])
             olive_deploy.deploy()
             if data['verify']:
                 LOG.info("Verification not yet supported for Olive")

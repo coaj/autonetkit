@@ -114,7 +114,11 @@ class device (namedtuple('node', "network, id")):
 
     @property
     def is_virtual(self):
-        return self.virtual
+        return self.device_type == "virtual"
+
+    @property
+    def is_rpki_server(self):
+        return self.device_type == "rpki"
 
     @property
     def rtr_folder_name(self):
@@ -333,20 +337,30 @@ class Network(object):
         """return devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and not self.graph.node[n].get("virtual"))
+                    if self.asn(n) == asn and not self.graph.node[n].get("virtual") and not  self.graph.node[n].get("rpki"))
         else:
 # return all nodes
-            return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual"))
+            return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
 
     
     def virtual_nodes(self, asn=None):
-        """return devices in a network"""
+        """return virtual devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
                     if self.asn(n) == asn and self.graph.node[n].get("virtual"))
         else:
 # return all nodes
             return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual"))
+
+
+    def rpki_nodes(self, asn=None):
+        """return rpki devices in a network"""
+        if asn:
+            return (n for n in self.graph.nodes_iter()
+                    if self.asn(n) == asn and self.graph.node[n].get("rpki"))
+        else:
+# return all rpki servers
+            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("rpki"))
 
 
     def device_type(self, node):
@@ -358,7 +372,12 @@ class Network(object):
 
     def servers(self, asn=None):
         """return servers in network"""
-        return (n for n in self.devices(asn) if self.device_type(n) == 'server')
+        return (n for n in self.virtual_nodes(asn))
+
+    def rpki_servers(self, asn=None):
+        """return rpki servers in network"""
+        return (n for n in self.rpki_nodes(asn))
+	
 
     ################################################## 
     #TODO: move these into a nodes shortcut module

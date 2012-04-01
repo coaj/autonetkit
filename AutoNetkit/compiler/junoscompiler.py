@@ -214,6 +214,7 @@ class JunosCompiler:
                 'id':          int_id,
                 'ip':           str(data['ip']),
                 'prefixlen':    str(subnet.prefixlen),
+		'netmask':	str(subnet.netmask),
                 'broadcast':    str(subnet.broadcast),
                 'description':  description,
             })
@@ -428,10 +429,61 @@ class JunosCompiler:
                     date = date,
                     ))
 
+
+    def configure_rpki(self):
+        """ Configures RPKI servers"""
+        LOG.info("Configuring RPKI servers: %s" % self.target)
+        rpki_template = lookup.get_template("junos/rpki.mako")
+        ank_version = pkg_resources.get_distribution("AutoNetkit").version
+        date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+        physical_graph = self.network.graph
+        igp_graph = ank.igp_graph(self.network)
+        ibgp_graph = ank.get_ibgp_graph(self.network)
+        ebgp_graph = ank.get_ebgp_graph(self.network)
+        for rpki_server in self.network.rpki_servers():
+            #check interfaces feasible
+            if self.network.graph.in_degree(rpki_server) > self.interface_limit:
+                LOG.warn("%s exceeds interface count: %s (max %s)" % (self.network.label(rpki_server),
+                    self.network.graph.in_degree(rpki_server), self.interface_limit))
+            asn = self.network.asn(rpki_server)
+            network_list = []
+            lo_ip = self.network.lo_ip(rpki_server)
+
+            interfaces,static_routes = self.configure_interfaces(rpki_server)
+            igp_interfaces = self.configure_igp(rpki_server, igp_graph,ebgp_graph)
+            (bgp_groups, policy_options) = self.configure_bgp(rpki_server, physical_graph, ibgp_graph, ebgp_graph)
+
+            # advertise AS subnet
+            adv_subnet = self.network.ip_as_allocs[asn]
+            if not adv_subnet in network_list:
+                network_list.append(adv_subnet)
+
+            server_filename = router_conf_path(self.network, rpki_server)
+            with open( server_filename, 'wb') as f_jun:
+                f_jun.write( rpki_template.render(
+                    hostname = rpki_server.hostname,
+                    username = 'autonetkit',
+                    interfaces=interfaces,
+		    static_routes=static_routes,
+                    igp_interfaces=igp_interfaces,
+                    igp_protocol = self.igp,
+                    asn = asn,
+                    lo_ip=lo_ip,
+                    router_id = lo_ip.ip,
+                    network_list = network_list,
+                    bgp_groups = bgp_groups,
+                    policy_options = policy_options,
+                    ank_version = ank_version,
+                    date = date,
+                    ))
+
+
     def configure(self):
         if self.junosphere:
             self.configure_junosphere()
         self.configure_junos()
+	self.configure_rpki()
 # create .tgz
         tar_filename = "junos_%s.tar.gz" % time.strftime("%Y%m%d_%H%M",
                 time.localtime())
