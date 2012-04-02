@@ -53,7 +53,10 @@ class OliveDeploy():
 
     def __init__(self, host=None, username=None, network=None,
             host_alias = None,
-            base_image = None, telnet_start_port=None, parallel = 1,
+            base_image = None,
+	    rpki_base_image = None,
+	    telnet_start_port=None,
+	    parallel = 1,
             qemu="/usr/bin/qemu", seabios="-L /usr/share/seabios",
             lab_dir="junos_config_dir"):
         self.server = None    
@@ -76,6 +79,7 @@ class OliveDeploy():
         self.vde_socket_name = None
         self.vde_mgmt_socket_name = None
         self.base_image = base_image
+        self.rpki_base_image = rpki_base_image
         self.olive_dir = config.ank_main_dir
         self.telnet_start_port = telnet_start_port
 
@@ -143,6 +147,55 @@ class OliveDeploy():
                 LOG.warn("Provided Netkit host is not running Linux")
 
         return shell
+
+
+    def start_rpki_vm(self, router_info, startup_command, shell):
+        LOG = logging.getLogger("ANK")
+        LOG.info( "%s: Starting on port %s" % (router_info.router_name, router_info.telnet_port))
+        shell.sendline(startup_command)
+        shell.sendline("disown")
+# Telnet in
+#        shell.prompt()
+#        shell.sendline("telnet localhost %s" % router_info.telnet_port)
+#        ready_prompt = "ubuntu ttyS0"
+#
+#        for loop_count in range(0, 100):
+#            i = shell.expect([pexpect.TIMEOUT, ready_prompt, 
+#                "Starting AppArmor profiles",
+#                ]) 
+#            if i == 0:
+## Matched, continue on
+#                pass
+#            elif i == 1:
+#                LOG.info( "%s: Logging into Olive" % router_info.router_name)
+#                break
+#            else:
+#                # print the progress status message
+#                progress_message = shell.match.group(0)
+#                LOG.info("%s: Startup progress %s" % (router_info.router_name, progress_message))
+#
+#	shell.expect("login:")
+#        shell.sendline("root")
+#        shell.expect("Password:")
+#        shell.sendline("Clouds")
+#        shell.expect("root@base-image:")
+## Now load our ank config
+#        LOG.info( "%s: Committing configuration" % router_info.router_name)
+#        shell.sendline("/usr/sbin/cli -c 'configure; load override ANK.conf; commit'")
+#        shell.expect("commit complete",timeout=60*5)
+## logout, expect a new login prompt
+#        shell.sendline("exit")
+#        shell.expect("login:")
+## Now disconnect telnet
+#        shell.sendcontrol("]")
+#        shell.expect("telnet>")
+#        shell.sendcontrol("D")
+#        shell.expect("Connection closed")
+#        LOG.info( "%s: Configuration committed to Olive" % router_info.router_name)
+#        shell.prompt()
+#
+
+	return
 
     def start_olive_vm(self, router_info, startup_command, shell):
         LOG = logging.getLogger("ANK")
@@ -343,6 +396,7 @@ class OliveDeploy():
         configset_directory_full_path = os.path.join(working_directory, configset_directory)
 # TODO: store these from junos compiler in network.compiled_labs dict
         config_files = {}
+	rpki_config_files = {}
 
 #TODO: tidy the multiple loops into one simple loop
         for router in self.network.routers():
@@ -354,8 +408,27 @@ class OliveDeploy():
             config_files[router]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
             config_files[router]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
 
+        for rpki_server in self.network.rpki_servers():
+            node_filename = rpki_server.rtr_folder_name
+            rpki_config_files[rpki_server] = {}
+            rpki_config_files[rpki_server]['name'] = node_filename
+            rpki_config_files[rpki_server]['config_file_full_path'] = (os.path.join(working_directory, configset_directory, "%s.conf" % node_filename))
+            rpki_config_files[rpki_server]['config_file_snapshot'] = os.path.join(self.snapshot_folder, "%s.iso" % node_filename)
+            rpki_config_files[rpki_server]['base_image_snapshot'] = os.path.join(self.snapshot_folder, "%s.img" % node_filename)
+            rpki_config_files[rpki_server]['monitor_socket'] = os.path.join(configset_directory_full_path, "%s-monitor.sock" % node_filename)
+
+
         LOG.debug("Making ISO FS")
+     # creating ISO files for routers
         for router, data in config_files.items():
+            cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
+                    data.get('config_file_full_path'))
+            shell.sendline(cmd)
+            shell.expect(["extents written"])
+        shell.prompt()
+
+     # creating ISO files for rpki servers
+        for rpki_server, data in rpki_config_files.items():
             cmd = "mkisofs -o %s %s " % (data.get('config_file_snapshot'), 
                     data.get('config_file_full_path'))
             shell.sendline(cmd)
@@ -371,15 +444,24 @@ class OliveDeploy():
             shell.sendline(cmd)
 
         shell.prompt()
-    
+
+        for rpki_server, data in rpki_config_files.items():
+            cmd =  "qemu-img create -f qcow2 -b %s %s" % (self.rpki_base_image,
+                    data['base_image_snapshot'])
+            shell.sendline(cmd)
+            shell.expect(["Formatting"])
+            shell.sendline(cmd)
+
+        shell.prompt()
+
         unallocated_ports = self.unallocated_ports()
         qemu_routers = []
 
         LOG.debug("Starting qemu machines")
 
         router_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
+        rpki_server_info_tuple = namedtuple('router_info', 'router_name, iso_image, img_image, mac_addresses, telnet_port, switch_socket, monitor_socket')
 
-        qemu_routers = []
         startup_template = lookup.get_template("autonetkit/olive_startup.mako")
     #TODO: sort by name when getting telnet port so is done in sequence
         routers = sorted(self.network.routers(), key = lambda x: x.rtr_folder_name)
@@ -406,6 +488,31 @@ class OliveDeploy():
             startup_command = " ".join(item for item in startup_command.split("\n"))
             qemu_routers.append( (router_info, startup_command))
 
+
+        rpki_servers = sorted(self.network.rpki_servers(), key = lambda x: x.rtr_folder_name)
+        for rpki_server_id, rpki_server in enumerate(rpki_servers):
+            mac_list = self.mac_address_list(rpki_server_id, 6)
+            telnet_port = unallocated_ports.next()
+# And record for future
+            self.record_port(rpki_server, telnet_port)
+            router_info = rpki_server_info_tuple(
+                    rpki_config_files[rpki_server].get('name'),
+                    rpki_config_files[rpki_server].get('config_file_snapshot'),
+                    rpki_config_files[rpki_server].get('base_image_snapshot'),
+                    mac_list,
+                    telnet_port,
+                    self.vde_socket_name,
+                    rpki_config_files[rpki_server].get('monitor_socket'),
+                    )
+
+            startup_command = startup_template.render(
+                    router_info = router_info,
+                    qemu = self.qemu,
+                    seabios = self.seabios,
+                    )
+            startup_command = " ".join(item for item in startup_command.split("\n"))
+            qemu_routers.append( (router_info, startup_command))
+
 #TODO: Sort routers by name so start in a more sensible order
         #qemu_routers = sorted(qemu_routers, key=lambda router: router.router_name)
         #total_boot_time = 0
@@ -419,10 +526,15 @@ class OliveDeploy():
                 shell = self.get_shell()
                 while True:
                     router_info, startup_command = q.get()
-                    self.start_olive_vm(router_info, startup_command, shell)
-                    q.task_done()
-                    started_olives.append(router_info.router_name)
-
+		    for router in self.network.routers():
+	                self.start_olive_vm(router_info, startup_command, shell)
+        	        q.task_done()
+                	started_olives.append(router_info.router_name)
+		    for rpki_server in self.network.rpki_servers():
+		        self.start_rpki_vm(router_info, startup_command, shell) 
+    		        q.task_done()
+               	        started_olives.append(router_info.router_name)
+	
         q = Queue.Queue()
 
         for i in range(num_worker_threads):

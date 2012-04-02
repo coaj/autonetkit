@@ -337,7 +337,7 @@ class Network(object):
         """return devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and not self.graph.node[n].get("virtual") and not  self.graph.node[n].get("rpki"))
+                    if self.asn(n) == asn and not self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
         else:
 # return all nodes
             return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
@@ -347,21 +347,20 @@ class Network(object):
         """return virtual devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and self.graph.node[n].get("virtual"))
+                    if self.asn(n) == asn and self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
         else:
 # return all nodes
-            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual"))
+            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
 
 
     def rpki_nodes(self, asn=None):
         """return rpki devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and self.graph.node[n].get("rpki"))
+                    if self.asn(n) == asn and self.graph.node[n].get("rpki") and not self.graph.node[n].get("virtual"))
         else:
 # return all rpki servers
-            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("rpki"))
-
+            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("rpki") and not self.graph.node[n].get("virtual"))
 
     def device_type(self, node):
         return self.graph.node[node].get("device_type")
@@ -376,8 +375,8 @@ class Network(object):
 
     def rpki_servers(self, asn=None):
         """return rpki servers in network"""
-        return (n for n in self.rpki_nodes(asn))
-	
+        return (n for n in self.rpki_nodes(asn) if self.device_type(n) == 'rpki')
+#	
 
     ################################################## 
     #TODO: move these into a nodes shortcut module
