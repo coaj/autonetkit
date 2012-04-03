@@ -117,7 +117,7 @@ class device (namedtuple('node', "network, id")):
         return self.device_type == "virtual"
 
     @property
-    def is_rpki_server(self):
+    def is_rpki(self):
         return self.device_type == "rpki"
 
     @property
@@ -332,35 +332,24 @@ class Network(object):
     def neighbors(self, node):
         return self.graph.neighbors(node)
 
-
     def devices(self, asn=None):
         """return devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and not self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
+                    if self.asn(n) == asn and not self.graph.node[n].get("virtual"))
         else:
 # return all nodes
-            return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
+            return (n for n in self.graph.nodes_iter() if not self.graph.node[n].get("virtual"))
 
     
     def virtual_nodes(self, asn=None):
         """return virtual devices in a network"""
         if asn:
             return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
+                    if self.asn(n) == asn and self.graph.node[n].get("virtual"))
         else:
-# return all nodes
-            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual") and not self.graph.node[n].get("rpki"))
-
-
-    def rpki_nodes(self, asn=None):
-        """return rpki devices in a network"""
-        if asn:
-            return (n for n in self.graph.nodes_iter()
-                    if self.asn(n) == asn and self.graph.node[n].get("rpki") and not self.graph.node[n].get("virtual"))
-        else:
-# return all rpki servers
-            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("rpki") and not self.graph.node[n].get("virtual"))
+# return all virtual nodes
+            return (n for n in self.graph.nodes_iter() if self.graph.node[n].get("virtual"))
 
     def device_type(self, node):
         return self.graph.node[node].get("device_type")
@@ -375,7 +364,12 @@ class Network(object):
 
     def rpki_servers(self, asn=None):
         """return rpki servers in network"""
-        return (n for n in self.rpki_nodes(asn) if self.device_type(n) == 'rpki')
+        return (n for n in self.devices(asn) if self.device_type(n) == 'rpki')
+
+    def deployment_items(self, asn=None): #both routers and RPKI servers
+        """return rpki servers and routers in network"""
+        return (n for n in self.devices(asn) if self.device_type(n) == 'rpki' or self.device_type(n) == 'router')
+
 #	
 
     ################################################## 
