@@ -482,11 +482,13 @@ class JunosCompiler:
 	    rpki_tree[rpki_server] = defaultdict(dict)
 	    rpki_tree[rpki_server]['fqdn'] = rpki_server
 	    for neighbor in self.network.g_rpki.neighbors(str(rpki_server)):
+	    	nbr_list = [n for n in neighbor]
 #	        # check the relationships between rpki nodes
 		relationship = self.network.g_rpki.get_edge_data(str(rpki_server), str(neighbor))
 		if 'children' in relationship['relation']:
 		    rpki_tree[rpki_server]['children'][neighbor] = defaultdict(dict)
 		    rpki_tree[rpki_server]['children'][neighbor]['asn'] = self.network.asn(neighbor)
+		    rpki_tree[rpki_server]['children'][neighbor]['rtr_folder'] = ''.join([n if not "." in n else "_" for n in nbr_list])
 		    rpki_tree[rpki_server]['children'][neighbor]['fqdn'] = neighbor
 		    rpki_tree[rpki_server]['children'][neighbor]['aggregate'] = self.network.ip_as_allocs[self.network.asn(neighbor)]
 		    rpki_tree[rpki_server]['children'][neighbor]['prefixes'] = as_prefixes[str(self.network.asn(neighbor))]
@@ -515,7 +517,7 @@ class JunosCompiler:
 		    for key, value in root_iter:
 		        if isinstance(value,dict):
 				for i in value:
-		        	    yaml_string += "\n%s- name: %s" % (indent,value[i]['fqdn'])
+		        	    yaml_string += "\n%s- name: %s" % (indent,value[i]['rtr_folder'])
 			            yaml_string += "\n%s  asn: %s" % (indent, value[i]['asn'])
 			  	    yaml_string += "\n%s  ipv4: %s" % (indent, value[i]['aggregate'])
 				    yaml_string +=	"\n%s  roa_request:" % indent

@@ -115,7 +115,7 @@ class ChildComposer:
 		    for name, data in iter1:
 		        self.return_str+=("\n%s- name: %s\n%s  asn: %s\n%s  ipv4: %s\n%s  roa_request:" %(\
 		        space*self.counter,\
-		        data['fqdn'],\
+		        data['rtr_folder'],\
 		        space*self.counter,\
 		        data['asn'],\
 		        space*self.counter,\
