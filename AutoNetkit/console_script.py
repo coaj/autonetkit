@@ -30,6 +30,7 @@ def main():
             help="Save the network for future use (eg verification")
     opt.add_option('--file', '-f', default= None, help="Load configuration from FILE")        
     opt.add_option('--bgp_policy', '-b', default= None, help="Load BGP policy statements from FILE")     
+    opt.add_option('--rpki', '-r', default= None, help="Load RPKI structure from FILE")     
 
     opt.add_option('--debug',  action="store_true", default=False, help="Debugging output")
 
@@ -69,7 +70,7 @@ def main():
     inet = Internet(netkit=options.netkit,
             cbgp=options.cbgp, dynagen=options.dynagen, junosphere=use_junosphere,
             junosphere_olive=options.junosphere_olive, olive=options.olive, 
-            policy_file = options.bgp_policy, deploy = options.deploy,
+            policy_file = options.bgp_policy, rpki_file = options.rpki, deploy = options.deploy,
             olive_qemu_patched=options.olive_qemu_patched, igp=igp)
     inet.load(f_name)
 
