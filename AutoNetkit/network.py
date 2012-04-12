@@ -195,6 +195,7 @@ class Network(object):
         self._graphs['bgp_session'].graph['prefixes'] = {}
         self._graphs['dns'] = nx.DiGraph()
         self._graphs['dns_authoritative'] = nx.DiGraph()
+        self._graphs['rpki'] = nx.DiGraph()
         self.compiled_labs = {} # Record compiled lab filenames, and configs
 
     def __repr__(self):
@@ -253,6 +254,14 @@ class Network(object):
     @g_session.setter
     def g_session(self, value):
         self._graphs['bgp_session'] = value
+ 
+    @property
+    def g_rpki(self):
+        return self._graphs['rpki']
+
+    @g_rpki.setter
+    def g_rpki(self, value):
+        self._graphs['rpki'] = value
 
     @property
     def g_dns(self):
@@ -391,6 +400,16 @@ class Network(object):
         except KeyError:
             try:
                 return self.asn(self.find(node))
+            except DeviceNotFoundException:
+                LOG.debug("Unable to find device %s" % node)
+
+
+    def rpki_root(self, node):
+        try:
+            return str(self.graph.node[node].get('rpki'))
+        except KeyError:
+            try:
+                return self.rpki_root(self.find(node))
             except DeviceNotFoundException:
                 LOG.debug("Unable to find device %s" % node)
 

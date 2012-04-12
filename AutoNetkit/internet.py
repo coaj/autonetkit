@@ -51,7 +51,7 @@ class Internet:
     def __init__(self, filename=None, tapsn=IPNetwork("172.16.0.0/16"),
             netkit=False, cbgp=False, dynagen=False,
             junosphere=False, junosphere_olive=False, olive=False,
-            policy_file=None, olive_qemu_patched=False, deploy = False,
+            policy_file=None, rpki_file=None, olive_qemu_patched=False, deploy = False,
             igp='ospf'): 
         self.network = network.Network()
 # Keep track of if deploying to smarten up compiler
@@ -62,6 +62,7 @@ class Internet:
             tapsn = IPNetwork(config.settings.get('tapsn'))
         self.tapsn = tapsn
         self.policy_file = policy_file
+	self.rpki_file = rpki_file
         self.compile_targets = {
                 'netkit': netkit,
                 'cbgp': cbgp,
@@ -262,7 +263,7 @@ class Internet:
         #LOG.info("Optimising")
         #self.network.optimise_igp_weights() 
 
-    def compile(self):             
+    def compile(self):        
         """Compile into device configuration files.
 
           Args:
@@ -313,6 +314,11 @@ class Internet:
             LOG.info("Applying BGP policy from %s" % self.policy_file)
             pol_parser = ank.BgpPolicyParser(self.network)
             pol_parser.apply_policy_file(self.policy_file)
+	
+	if self.rpki_file:
+	    LOG.info("Applying RPKI structure from %s" % self.rpki_file)
+	    rpki_parser = ank.RpkiSetsParser(self.network)
+	    rpki_parser.apply_rpki_file(self.rpki_file)
             
         if self.will_deploy and not self.compile_targets['netkit']:
             auto_compile = any( data.get("active") 

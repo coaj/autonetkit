@@ -19,6 +19,8 @@ import shutil
 import glob
 import itertools
 from collections import namedtuple
+from collections import defaultdict
+import threading
 
 import AutoNetkit as ank
 from AutoNetkit import config
@@ -49,6 +51,10 @@ def router_conf_dir():
     """Directory for individual Junos router configs"""
     return os.path.join(lab_dir(), "configset")
 
+def yaml_path():
+    """Directory for individual Junos router configs"""
+    return os.path.join(lab_dir(), "config.yaml")
+
 def router_conf_file(network, router):
     """Returns filename for config file for router"""
     return "%s.conf" % ank.rtr_folder_name(network, router)
@@ -57,6 +63,7 @@ def router_conf_path(network, router):
     """ Returns full path to router config file"""
     r_file = router_conf_file(network, router)
     return os.path.join(router_conf_dir(), r_file)
+
 
 class JunosCompiler:
     """Compiler main"""
@@ -434,6 +441,7 @@ class JunosCompiler:
         """ Configures RPKI servers"""
         LOG.info("Configuring RPKI servers: %s" % self.target)
         rpki_template = lookup.get_template("junos/rpki.mako")
+        yaml_template = lookup.get_template("junos/yaml.mako")
         ank_version = pkg_resources.get_distribution("AutoNetkit").version
         date = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 
@@ -441,6 +449,90 @@ class JunosCompiler:
         igp_graph = ank.igp_graph(self.network)
         ibgp_graph = ank.get_ibgp_graph(self.network)
         ebgp_graph = ank.get_ebgp_graph(self.network)
+	as_prefixes = defaultdict(list)
+	rpki_tree = defaultdict(dict)
+	rpki_server_list = []
+
+	for router in self.network.graph.nodes():
+	    # collect prefixes of the AS
+	    as_number = str(self.network.asn(router))
+	    lo_ip = self.network.lo_ip(router)
+	    lo_ip_ip = str(lo_ip.ip)
+	    lo_ip_prefixlen = str(lo_ip.prefixlen)
+	    loopback_ip = str(lo_ip_ip+"/"+lo_ip_prefixlen)
+	    as_prefixes[as_number].append(loopback_ip)
+	    for src, dst, data in self.network.graph.edges(router, data=True):
+                subnet = str(data['sn'])
+		if not subnet in as_prefixes[as_number]:
+    	            as_prefixes[as_number].append(subnet)
+
+
+	rpki_root_lst = [n for n in self.network.g_rpki.nodes() if 'root' in self.network.rpki_root(n)]
+	if len(rpki_root_lst) > 1:
+	    LOG.warn("%s rpki_root servers configured, only one is allowed" %len(rpki_root_lst)) 
+        rpki_root_str = ', '.join(rpki_root_lst)
+	
+
+        for rpki_server in self.network.rpki_servers():
+            #check interfaces feasible
+	    rpki_children = {}
+            asn = self.network.asn(rpki_server)
+            rpki_aggregate = self.network.ip_as_allocs[asn]
+	    rpki_server_list.append(rpki_server)
+	    rpki_tree[rpki_server] = defaultdict(dict)
+	    rpki_tree[rpki_server]['fqdn'] = rpki_server
+	    for neighbor in self.network.g_rpki.neighbors(str(rpki_server)):
+#	        # check the relationships between rpki nodes
+		relationship = self.network.g_rpki.get_edge_data(str(rpki_server), str(neighbor))
+		if 'children' in relationship['relation']:
+		    rpki_tree[rpki_server]['children'][neighbor] = defaultdict(dict)
+		    rpki_tree[rpki_server]['children'][neighbor]['asn'] = self.network.asn(neighbor)
+		    rpki_tree[rpki_server]['children'][neighbor]['fqdn'] = neighbor
+		    rpki_tree[rpki_server]['children'][neighbor]['aggregate'] = self.network.ip_as_allocs[self.network.asn(neighbor)]
+		    rpki_tree[rpki_server]['children'][neighbor]['prefixes'] = as_prefixes[str(self.network.asn(neighbor))]
+
+	
+	def find_children(parent):
+	    for node in rpki_tree:
+		if str(parent) in str(node):
+		    tmp_dict = rpki_tree[node]
+		    for i in tmp_dict:
+		        if 'children' in i:
+			    return [j for j in tmp_dict[i]]
+	
+	# write yaml file for yamltest.py
+	# TODO: write this in mako
+	yaml_file = yaml_path()
+	with open( yaml_file, 'wb' ) as f_yaml:
+	    yaml_string = ""
+	    yaml_string += ("name:            %s\ncrl_interval:    5m\nregen_margin:    2m\nvalid_for:       2d\nkids:" %rpki_root_str)
+	    tree_iter = rpki_tree.items()
+	    for node, data in tree_iter:
+	        if rpki_root_str in str(data['fqdn']):
+		    indent = "  "
+		    count = 1
+		    root_iter = data.items()
+		    for key, value in root_iter:
+		        if isinstance(value,dict):
+				for i in value:
+		        	    yaml_string += "\n%s- name: %s" % (indent,value[i]['fqdn'])
+			            yaml_string += "\n%s  asn: %s" % (indent, value[i]['asn'])
+			  	    yaml_string += "\n%s  ipv4: %s" % (indent, value[i]['aggregate'])
+				    yaml_string +=	"\n%s  roa_request:" % indent
+				    for prefix in  value[i]['prefixes']:
+				        yaml_string += "\n%s- asn: %s" % (indent*3, value[i]['asn'])
+				        yaml_string += "\n%s  ipv4: %s" % (indent*3, prefix)
+				    composer = ank.ChildComposer(value[i]['fqdn'], indent*3*count, rpki_tree)
+				    child_entries = composer.search()
+				    if len(child_entries):
+				        yaml_string += "\n%s  kids:" %indent
+			                yaml_string += child_entries
+	    print yaml_string
+
+#	    f_yaml.write(yaml_string)
+#
+
+
         for rpki_server in self.network.rpki_servers():
             #check interfaces feasible
             if self.network.graph.in_degree(rpki_server) > self.interface_limit:
@@ -451,7 +543,7 @@ class JunosCompiler:
             lo_ip = self.network.lo_ip(rpki_server)
 
             interfaces,static_routes = self.configure_interfaces(rpki_server)
-            igp_interfaces = self.configure_igp(rpki_server, igp_graph,ebgp_graph)
+            igp_interfaces = self.configure_igp(rpki_server, igp_graph, ebgp_graph)
             (bgp_groups, policy_options) = self.configure_bgp(rpki_server, physical_graph, ibgp_graph, ebgp_graph)
 
             # advertise AS subnet
