@@ -527,9 +527,9 @@ class JunosCompiler:
 				    if len(child_entries):
 				        yaml_string += "\n%s  kids:" %indent
 			                yaml_string += child_entries
-	    print yaml_string
+#	    print yaml_string
 
-#	    f_yaml.write(yaml_string)
+	    f_yaml.write(yaml_string)
 #
 
 
