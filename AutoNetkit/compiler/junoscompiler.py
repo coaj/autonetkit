@@ -471,6 +471,7 @@ class JunosCompiler:
 	if len(rpki_root_lst) > 1:
 	    LOG.warn("%s rpki_root servers configured, only one is allowed" %len(rpki_root_lst)) 
         rpki_root_str = ', '.join(rpki_root_lst)
+	rpki_root_folder = ''.join([n if not "." in n else "_" for n in rpki_root_str])
 	
 
         for rpki_server in self.network.rpki_servers():
@@ -507,7 +508,7 @@ class JunosCompiler:
 	yaml_file = yaml_path()
 	with open( yaml_file, 'wb' ) as f_yaml:
 	    yaml_string = ""
-	    yaml_string += ("name:            %s\ncrl_interval:    5m\nregen_margin:    2m\nvalid_for:       2d\nkids:" %rpki_root_str)
+	    yaml_string += ("name:            %s\ncrl_interval:    5m\nregen_margin:    2m\nvalid_for:       2d\nkids:" %rpki_root_folder)
 	    tree_iter = rpki_tree.items()
 	    for node, data in tree_iter:
 	        if rpki_root_str in str(data['fqdn']):
