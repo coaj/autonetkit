@@ -1,0 +1,33 @@
+read the yamlfile from askar
+write out the rpki.conf files together with identity files
+work out which databases need to be created
+
+databases are created in advance, but then only talked to by the daemons
+we are not going to run the daemons on the creating machine
+
+present files and startup scripts to askar
+startup script needs to indicate
+	which daemons to run
+	which databases to create
+
+daemons create tables, but databases are created first
+
+ports:
+rootd 4401
+pubd 4402
+irdbd 4403
+rpkid 4404
+
+
+
+answer:
+	single script
+	-m/--machine- parameter
+		this is single machine mode and is to be run on the machine after deployment
+		it will create database and start daemons and run the post daemon starting commands
+	with out -m
+		this is setup mode and will be run on the machine that runs autonetkit
+		this will create all the identities upto but not running the daemons
+		and tar up the files for the remote machine
+	
+

@@ -1,0 +1,3 @@
+sql-cleaner clears databases and creates tables.
+daemons expect tables to be created
+if the config changes then the tables need to be emptied or things don't work

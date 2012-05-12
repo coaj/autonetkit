@@ -1,0 +1,1771 @@
+%!PS-Adobe-3.0
+%%BoundingBox: 38 24 574 768
+%%Title: Enscript Output
+%%For: Iain Phillips
+%%Creator: GNU enscript 1.6.4
+%%CreationDate: Tue May  8 11:22:48 2012
+%%Orientation: Landscape
+%%Pages: (atend)
+%%DocumentMedia: Letter 612 792 0 () ()
+%%DocumentNeededResources: (atend)
+%%EndComments
+%%BeginProlog
+%%BeginResource: procset Enscript-Prolog 1.6 4
+%
+% Procedures.
+%
+
+/_S {	% save current state
+  /_s save def
+} def
+/_R {	% restore from saved state
+  _s restore
+} def
+
+/S {	% showpage protecting gstate
+  gsave
+  showpage
+  grestore
+} bind def
+
+/MF {	% fontname newfontname -> -	make a new encoded font
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  % insert only valid encoding vectors
+  encoding_vector length 256 eq {
+    newfont /Encoding encoding_vector put
+  } if
+
+  newfontname newfont definefont pop
+} def
+
+/MF_PS { % fontname newfontname -> -	make a new font preserving its enc
+  /newfontname exch def
+  /fontname exch def
+
+  /fontdict fontname findfont def
+  /newfont fontdict maxlength dict def
+
+  fontdict {
+    exch
+    dup /FID eq {
+      % skip FID pair
+      pop pop
+    } {
+      % copy to the new font dictionary
+      exch newfont 3 1 roll put
+    } ifelse
+  } forall
+
+  newfont /FontName newfontname put
+
+  newfontname newfont definefont pop
+} def
+
+/SF { % fontname width height -> -	set a new font
+  /height exch def
+  /width exch def
+
+  findfont
+  [width 0 0 height 0 0] makefont setfont
+} def
+
+/SUF { % fontname width height -> -	set a new user font
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF
+  /F-gs-user-font width height SF
+} def
+
+/SUF_PS { % fontname width height -> -	set a new user font preserving its enc
+  /height exch def
+  /width exch def
+
+  /F-gs-user-font MF_PS
+  /F-gs-user-font width height SF
+} def
+
+/M {moveto} bind def
+/s {show} bind def
+
+/Box {	% x y w h -> -			define box path
+  /d_h exch def /d_w exch def /d_y exch def /d_x exch def
+  d_x d_y  moveto
+  d_w 0 rlineto
+  0 d_h rlineto
+  d_w neg 0 rlineto
+  closepath
+} def
+
+/bgs {	% x y height blskip gray str -> -	show string with bg color
+  /str exch def
+  /gray exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    gray setgray
+    fill
+  grestore
+  x y M str s
+} def
+
+/bgcs { % x y height blskip red green blue str -> -  show string with bg color
+  /str exch def
+  /blue exch def
+  /green exch def
+  /red exch def
+  /blskip exch def
+  /height exch def
+  /y exch def
+  /x exch def
+
+  gsave
+    x y blskip sub str stringwidth pop height Box
+    red green blue setrgbcolor
+    fill
+  grestore
+  x y M str s
+} def
+
+% Highlight bars.
+/highlight_bars {	% nlines lineheight output_y_margin gray -> -
+  gsave
+    setgray
+    /ymarg exch def
+    /lineheight exch def
+    /nlines exch def
+
+    % This 2 is just a magic number to sync highlight lines to text.
+    0 d_header_y ymarg sub 2 sub translate
+
+    /cw d_output_w cols div def
+    /nrows d_output_h ymarg 2 mul sub lineheight div cvi def
+
+    % for each column
+    0 1 cols 1 sub {
+      cw mul /xp exch def
+
+      % for each rows
+      0 1 nrows 1 sub {
+        /rn exch def
+        rn lineheight mul neg /yp exch def
+        rn nlines idiv 2 mod 0 eq {
+	  % Draw highlight bar.  4 is just a magic indentation.
+	  xp 4 add yp cw 8 sub lineheight neg Box fill
+	} if
+      } for
+    } for
+
+  grestore
+} def
+
+% Line highlight bar.
+/line_highlight {	% x y width height gray -> -
+  gsave
+    /gray exch def
+    Box gray setgray fill
+  grestore
+} def
+
+% Column separator lines.
+/column_lines {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h translate
+    /cw d_output_w cols div def
+    1 1 cols 1 sub {
+      cw mul 0 moveto
+      0 d_output_h rlineto stroke
+    } for
+  grestore
+} def
+
+% Column borders.
+/column_borders {
+  gsave
+    .1 setlinewidth
+    0 d_footer_h moveto
+    0 d_output_h rlineto
+    d_output_w 0 rlineto
+    0 d_output_h neg rlineto
+    closepath stroke
+  grestore
+} def
+
+% Do the actual underlay drawing
+/draw_underlay {
+  ul_style 0 eq {
+    ul_str true charpath stroke
+  } {
+    ul_str show
+  } ifelse
+} def
+
+% Underlay
+/underlay {	% - -> -
+  gsave
+    0 d_page_h translate
+    d_page_h neg d_page_w atan rotate
+
+    ul_gray setgray
+    ul_font setfont
+    /dw d_page_h dup mul d_page_w dup mul add sqrt def
+    ul_str stringwidth pop dw exch sub 2 div ul_h_ptsize -2 div moveto
+    draw_underlay
+  grestore
+} def
+
+/user_underlay {	% - -> -
+  gsave
+    ul_x ul_y translate
+    ul_angle rotate
+    ul_gray setgray
+    ul_font setfont
+    0 0 ul_h_ptsize 2 div sub moveto
+    draw_underlay
+  grestore
+} def
+
+% Page prefeed
+/page_prefeed {		% bool -> -
+  statusdict /prefeed known {
+    statusdict exch /prefeed exch put
+  } {
+    pop
+  } ifelse
+} def
+
+% Wrapped line markers
+/wrapped_line_mark {	% x y charwith charheight type -> -
+  /type exch def
+  /h exch def
+  /w exch def
+  /y exch def
+  /x exch def
+
+  type 2 eq {
+    % Black boxes (like TeX does)
+    gsave
+      0 setlinewidth
+      x w 4 div add y M
+      0 h rlineto w 2 div 0 rlineto 0 h neg rlineto
+      closepath fill
+    grestore
+  } {
+    type 3 eq {
+      % Small arrows
+      gsave
+        .2 setlinewidth
+        x w 2 div add y h 2 div add M
+        w 4 div 0 rlineto
+        x w 4 div add y lineto stroke
+
+        x w 4 div add w 8 div add y h 4 div add M
+        x w 4 div add y lineto
+	w 4 div h 8 div rlineto stroke
+      grestore
+    } {
+      % do nothing
+    } ifelse
+  } ifelse
+} def
+
+% EPSF import.
+
+/BeginEPSF {
+  /b4_Inc_state save def    		% Save state for cleanup
+  /dict_count countdictstack def	% Count objects on dict stack
+  /op_count count 1 sub def		% Count objects on operand stack
+  userdict begin
+  /showpage { } def
+  0 setgray 0 setlinecap
+  1 setlinewidth 0 setlinejoin
+  10 setmiterlimit [ ] 0 setdash newpath
+  /languagelevel where {
+    pop languagelevel
+    1 ne {
+      false setstrokeadjust false setoverprint
+    } if
+  } if
+} bind def
+
+/EndEPSF {
+  count op_count sub { pos } repeat	% Clean up stacks
+  countdictstack dict_count sub { end } repeat
+  b4_Inc_state restore
+} bind def
+
+% Check PostScript language level.
+/languagelevel where {
+  pop /gs_languagelevel languagelevel def
+} {
+  /gs_languagelevel 1 def
+} ifelse
+%%EndResource
+%%BeginResource: procset Enscript-Encoding-88591 1.6 4
+/encoding_vector [
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclam       	/quotedbl     	/numbersign   	
+/dollar       	/percent      	/ampersand    	/quoteright   	
+/parenleft    	/parenright   	/asterisk     	/plus         	
+/comma        	/hyphen       	/period       	/slash        	
+/zero         	/one          	/two          	/three        	
+/four         	/five         	/six          	/seven        	
+/eight        	/nine         	/colon        	/semicolon    	
+/less         	/equal        	/greater      	/question     	
+/at           	/A            	/B            	/C            	
+/D            	/E            	/F            	/G            	
+/H            	/I            	/J            	/K            	
+/L            	/M            	/N            	/O            	
+/P            	/Q            	/R            	/S            	
+/T            	/U            	/V            	/W            	
+/X            	/Y            	/Z            	/bracketleft  	
+/backslash    	/bracketright 	/asciicircum  	/underscore   	
+/quoteleft    	/a            	/b            	/c            	
+/d            	/e            	/f            	/g            	
+/h            	/i            	/j            	/k            	
+/l            	/m            	/n            	/o            	
+/p            	/q            	/r            	/s            	
+/t            	/u            	/v            	/w            	
+/x            	/y            	/z            	/braceleft    	
+/bar          	/braceright   	/tilde        	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/.notdef      	/.notdef      	/.notdef      	/.notdef      	
+/space        	/exclamdown   	/cent         	/sterling     	
+/currency     	/yen          	/brokenbar    	/section      	
+/dieresis     	/copyright    	/ordfeminine  	/guillemotleft	
+/logicalnot   	/hyphen       	/registered   	/macron       	
+/degree       	/plusminus    	/twosuperior  	/threesuperior	
+/acute        	/mu           	/paragraph    	/bullet       	
+/cedilla      	/onesuperior  	/ordmasculine 	/guillemotright	
+/onequarter   	/onehalf      	/threequarters	/questiondown 	
+/Agrave       	/Aacute       	/Acircumflex  	/Atilde       	
+/Adieresis    	/Aring        	/AE           	/Ccedilla     	
+/Egrave       	/Eacute       	/Ecircumflex  	/Edieresis    	
+/Igrave       	/Iacute       	/Icircumflex  	/Idieresis    	
+/Eth          	/Ntilde       	/Ograve       	/Oacute       	
+/Ocircumflex  	/Otilde       	/Odieresis    	/multiply     	
+/Oslash       	/Ugrave       	/Uacute       	/Ucircumflex  	
+/Udieresis    	/Yacute       	/Thorn        	/germandbls   	
+/agrave       	/aacute       	/acircumflex  	/atilde       	
+/adieresis    	/aring        	/ae           	/ccedilla     	
+/egrave       	/eacute       	/ecircumflex  	/edieresis    	
+/igrave       	/iacute       	/icircumflex  	/idieresis    	
+/eth          	/ntilde       	/ograve       	/oacute       	
+/ocircumflex  	/otilde       	/odieresis    	/divide       	
+/oslash       	/ugrave       	/uacute       	/ucircumflex  	
+/udieresis    	/yacute       	/thorn        	/ydieresis    	
+] def
+%%EndResource
+%%EndProlog
+%%BeginSetup
+%%IncludeResource: font Courier-Bold
+%%IncludeResource: font Courier
+/HFpt_w 10 def
+/HFpt_h 10 def
+/Courier-Bold /HF-gs-font MF
+/HF /HF-gs-font findfont [HFpt_w 0 0 HFpt_h 0 0] makefont def
+/Courier /F-gs-font MF
+/F-gs-font 7 7 SF
+/#copies 1 def
+% Pagedevice definitions:
+gs_languagelevel 1 gt {
+  <<
+    /PageSize [612 792] 
+  >> setpagedevice
+} if
+%%BeginResource: procset Enscript-Header-simple 1.6 4
+
+/do_header {	% print default simple header
+  gsave
+    d_header_x d_header_y HFpt_h 3 div add translate
+
+    HF setfont
+    user_header_p {
+      5 0 moveto user_header_left_str show
+
+      d_header_w user_header_center_str stringwidth pop sub 2 div
+      0 moveto user_header_center_str show
+
+      d_header_w user_header_right_str stringwidth pop sub 5 sub
+      0 moveto user_header_right_str show
+    } {
+      5 0 moveto fname show
+      45 0 rmoveto fmodstr show
+      45 0 rmoveto pagenumstr show
+    } ifelse
+
+  grestore
+} def
+%%EndResource
+/d_page_w 744 def
+/d_page_h 536 def
+/d_header_x 0 def
+/d_header_y 521 def
+/d_header_w 744 def
+/d_header_h 15 def
+/d_footer_x 0 def
+/d_footer_y 0 def
+/d_footer_w 744 def
+/d_footer_h 0 def
+/d_output_w 744 def
+/d_output_h 521 def
+/cols 2 def
+%%EndSetup
+%%Page: (1) 1
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 1 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (1) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(""") s
+5 503 M
+(ankgenrpki.) s
+5 487 M
+(This is a modification of yamltest.py from the rpki source distro:) s
+5 463 M
+(original comments below:) s
+5 447 M
+(Test framework, using the same YAML test description format as) s
+5 439 M
+(smoketest.py, but using the rpkic.py tool to do all the back-end) s
+5 431 M
+(work.  Reads YAML file, generates .csv and .conf files, runs daemons) s
+5 423 M
+(and waits for one of them to exit.) s
+5 407 M
+(Much of the YAML handling code lifted from smoketest.py.) s
+5 391 M
+(Still to do:) s
+5 375 M
+(- Implement smoketest.py-style delta actions, that is, modify the) s
+5 367 M
+(  allocation database under control of the YAML file, dump out new) s
+5 359 M
+(  .csv files, and run rpkic.py again to feed resulting changes into) s
+5 351 M
+(  running daemons.) s
+5 335 M
+($Id: yamltest.py 4433 2012-04-17 21:44:22Z sra $) s
+5 319 M
+(Copyright \(C\) 2009--2010  Internet Systems Consortium \("ISC"\)) s
+5 303 M
+(Permission to use, copy, modify, and distribute this software for any) s
+5 295 M
+(purpose with or without fee is hereby granted, provided that the above) s
+5 287 M
+(copyright notice and this permission notice appear in all copies.) s
+5 271 M
+(THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH) s
+5 263 M
+(REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY) s
+5 255 M
+(AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,) s
+5 247 M
+(INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM) s
+5 239 M
+(LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE) s
+5 231 M
+(OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR) s
+5 223 M
+(PERFORMANCE OF THIS SOFTWARE.) s
+5 207 M
+(Portions copyright \(C\) 2007--2008  American Registry for Internet Numbers \("ARIN"\)) s
+5 191 M
+(Permission to use, copy, modify, and distribute this software for any) s
+5 183 M
+(purpose with or without fee is hereby granted, provided that the above) s
+5 175 M
+(copyright notice and this permission notice appear in all copies.) s
+5 159 M
+(THE SOFTWARE IS PROVIDED "AS IS" AND ARIN DISCLAIMS ALL WARRANTIES WITH) s
+5 151 M
+(REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY) s
+5 143 M
+(AND FITNESS.  IN NO EVENT SHALL ARIN BE LIABLE FOR ANY SPECIAL, DIRECT,) s
+5 135 M
+(INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM) s
+5 127 M
+(LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE) s
+5 119 M
+(OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR) s
+5 111 M
+(PERFORMANCE OF THIS SOFTWARE.) s
+5 95 M
+(""") s
+5 79 M
+(import subprocess, re, os, getopt, sys, yaml, signal, time) s
+5 71 M
+(import rpki.resource_set, rpki.sundial, rpki.config, rpki.log) s
+5 63 M
+(import rpki.csv_utils, rpki.x509, tempfile) s
+5 47 M
+(# Nasty regular expressions for parsing config files.  Sadly, while) s
+5 39 M
+(# the Python ConfigParser supports writing config files, it does so in) s
+5 31 M
+(# such a limited way that it's easier just to hack this ourselves.) s
+5 15 M
+(section_regexp = re.compile\("\\s*\\[\\s*\(.+?\)\\s*\\]\\s*$"\)) s
+5 7 M
+(variable_regexp = re.compile\("\\s*\([-a-zA-Z0-9_]+\)\\s*=\\s*\(.+?\)\\s*$"\)) s
+377 503 M
+(def cleanpath\(*names\):) s
+377 495 M
+(  """) s
+377 487 M
+(  Construct normalized pathnames.) s
+377 479 M
+(  """) s
+377 471 M
+(  return os.path.normpath\(os.path.join\(*names\)\)) s
+377 455 M
+(# Pathnames for various things we need) s
+377 439 M
+(# this depends on --prefix to ./configure) s
+377 431 M
+(install_prefix="/opt/rpki") s
+377 415 M
+(# we will put all the files here) s
+377 407 M
+(test_dir  = tempfile.mkdtemp\(prefix="rpki_"\)) s
+377 391 M
+(prog_rpkic   = cleanpath\(install_prefix, "sbin/rpkic"\)) s
+377 383 M
+(prog_rpkid   = cleanpath\(install_prefix, "sbin/rpkid"\)) s
+377 375 M
+(prog_irdbd   = cleanpath\(install_prefix, "sbin/irdbd"\)) s
+377 367 M
+(prog_pubd    = cleanpath\(install_prefix, "sbin/pubd"\)) s
+377 359 M
+(prog_rootd   = cleanpath\(install_prefix, "sbin/rootd"\)) s
+377 351 M
+(egrpkiconf = "./rpki.conf") s
+377 335 M
+(class roa_request\(object\):) s
+377 327 M
+(  """) s
+377 319 M
+(  Representation of a ROA request.) s
+377 311 M
+(  """) s
+377 295 M
+(  def __init__\(self, asn, ipv4, ipv6\):) s
+377 287 M
+(    self.asn = asn) s
+377 279 M
+(    self.v4 = rpki.resource_set.roa_prefix_set_ipv4\("".join\(ipv4.split\(\)\)\) if ipv4 els) s
+377 271 M
+(e None) s
+377 263 M
+(    self.v6 = rpki.resource_set.roa_prefix_set_ipv6\("".join\(ipv6.split\(\)\)\) if ipv6 els) s
+377 255 M
+(e None) s
+377 239 M
+(  def __eq__\(self, other\):) s
+377 231 M
+(    return self.asn == other.asn and self.v4 == other.v4 and self.v6 == other.v6) s
+377 215 M
+(  def __hash__\(self\):) s
+377 207 M
+(    v4 = tuple\(self.v4\) if self.v4 is not None else None) s
+377 199 M
+(    v6 = tuple\(self.v6\) if self.v6 is not None else None) s
+377 191 M
+(    return self.asn.__hash__\(\) + v4.__hash__\(\) + v6.__hash__\(\)) s
+377 175 M
+(  def __str__\(self\):) s
+377 167 M
+(    if self.v4 and self.v6:) s
+377 159 M
+(      return "%s: %s,%s" % \(self.asn, self.v4, self.v6\)) s
+377 151 M
+(    else:) s
+377 143 M
+(      return "%s: %s" % \(self.asn, self.v4 or self.v6\)) s
+377 127 M
+(  @classmethod) s
+377 119 M
+(  def parse\(cls, yaml\):) s
+377 111 M
+(    """) s
+377 103 M
+(    Parse a ROA request from YAML format.) s
+377 95 M
+(    """) s
+377 87 M
+(    return cls\(yaml.get\("asn"\), yaml.get\("ipv4"\), yaml.get\("ipv6"\)\)) s
+377 79 M
+(    ) s
+377 71 M
+(class allocation_db\(list\):) s
+377 63 M
+(  """) s
+377 55 M
+(  Our allocation database.) s
+377 47 M
+(  """) s
+377 31 M
+(  def __init__\(self, yaml\):) s
+377 23 M
+(    list.__init__\(self\)) s
+377 15 M
+(    self.root = allocation\(yaml, self\)) s
+377 7 M
+(    assert self.root.is_root) s
+_R
+S
+%%Page: (2) 2
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 2 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (2) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(    if self.root.crl_interval is None:) s
+5 503 M
+(      self.root.crl_interval = 24 * 60 * 60) s
+5 495 M
+(    if self.root.regen_margin is None:) s
+5 487 M
+(      self.root.regen_margin = 24 * 60 * 60) s
+5 479 M
+(    for a in self:) s
+5 471 M
+(      if a.sia_base is None:) s
+5 463 M
+(        if a.runs_pubd:) s
+5 455 M
+(          base = "rsync://localhost:%d/rpki/" % a.rsync_port) s
+5 447 M
+(        else:) s
+5 439 M
+(          base = a.parent.sia_base) s
+5 431 M
+(        a.sia_base = base + a.name + "/") s
+5 423 M
+(      if a.base.valid_until is None:) s
+5 415 M
+(        a.base.valid_until = a.parent.base.valid_until) s
+5 407 M
+(      if a.crl_interval is None:) s
+5 399 M
+(        a.crl_interval = a.parent.crl_interval) s
+5 391 M
+(      if a.regen_margin is None:) s
+5 383 M
+(        a.regen_margin = a.parent.regen_margin) s
+5 375 M
+(    self.root.closure\(\)) s
+5 367 M
+(    self.map = dict\(\(a.name, a\) for a in self\)) s
+5 359 M
+(    for a in self:) s
+5 351 M
+(      if a.is_hosted:) s
+5 343 M
+(        a.hosted_by = self.map[a.hosted_by]) s
+5 335 M
+(        a.hosted_by.hosts.append\(a\)) s
+5 327 M
+(        assert not a.is_root and not a.hosted_by.is_hosted) s
+5 311 M
+(  def dump\(self\):) s
+5 303 M
+(    """) s
+5 295 M
+(    Show contents of allocation database.) s
+5 287 M
+(    """) s
+5 279 M
+(    for a in self:) s
+5 271 M
+(      a.dump\(\)) s
+5 247 M
+(class allocation\(object\):) s
+5 239 M
+(  """) s
+5 231 M
+(  One entity in our allocation database.  Every entity in the database) s
+5 223 M
+(  is assumed to hold resources, so needs at least rpkic services.) s
+5 215 M
+(  Entities that don't have the hosted_by property run their own copies) s
+5 207 M
+(  of rpkid, irdbd, and pubd, so they also need myirbe services.) s
+5 199 M
+(  """) s
+5 183 M
+(  base_port     = None) s
+5 175 M
+(  parent        = None) s
+5 167 M
+(  crl_interval  = None) s
+5 159 M
+(  regen_margin  = None) s
+5 151 M
+(  rootd_port    = None) s
+5 143 M
+(  engine        = -1) s
+5 135 M
+(  rpkid_port    = -1) s
+5 127 M
+(  irdbd_port    = -1) s
+5 119 M
+(  pubd_port     = -1) s
+5 111 M
+(  rsync_port    = -1) s
+5 103 M
+(  rootd_port    = -1) s
+5 87 M
+(  @classmethod) s
+5 79 M
+(  def allocate_port\(cls\):) s
+5 71 M
+(    """) s
+5 63 M
+(    Allocate a TCP port.) s
+5 55 M
+(    """) s
+5 47 M
+(    cls.base_port += 1) s
+5 39 M
+(    return cls.base_port) s
+5 23 M
+(  base_engine = -1) s
+5 7 M
+(  @classmethod) s
+377 511 M
+(  def allocate_engine\(cls\):) s
+377 503 M
+(    """) s
+377 495 M
+(    Allocate an engine number, mostly used to construct MySQL database) s
+377 487 M
+(    names.) s
+377 479 M
+(    """) s
+377 471 M
+(    cls.base_engine += 1) s
+377 463 M
+(    return cls.base_engine) s
+377 447 M
+(  def __init__\(self, yaml, db, parent = None\):) s
+377 439 M
+(    db.append\(self\)) s
+377 431 M
+(    self.name = yaml["name"]) s
+377 423 M
+(    self.parent = parent) s
+377 415 M
+(    self.kids = [allocation\(k, db, self\) for k in yaml.get\("kids", \(\)\)]) s
+377 407 M
+(    valid_until = None) s
+377 399 M
+(    if "valid_until" in yaml:) s
+377 391 M
+(      valid_until = rpki.sundial.datetime.fromdatetime\(yaml.get\("valid_until"\)\)) s
+377 383 M
+(    if valid_until is None and "valid_for" in yaml:) s
+377 375 M
+(      valid_until = rpki.sundial.now\(\) + rpki.sundial.timedelta.parse\(yaml["valid_for") s
+377 367 M
+(]\)) s
+377 359 M
+(    self.base = rpki.resource_set.resource_bag\() s
+377 351 M
+(      asn = rpki.resource_set.resource_set_as\(yaml.get\("asn"\)\),) s
+377 343 M
+(      v4 = rpki.resource_set.resource_set_ipv4\(yaml.get\("ipv4"\)\),) s
+377 335 M
+(      v6 = rpki.resource_set.resource_set_ipv6\(yaml.get\("ipv6"\)\),) s
+377 327 M
+(      valid_until = valid_until\)) s
+377 319 M
+(    self.sia_base = yaml.get\("sia_base"\)) s
+377 311 M
+(    if "crl_interval" in yaml:) s
+377 303 M
+(      self.crl_interval = rpki.sundial.timedelta.parse\(yaml["crl_interval"]\).convert_t) s
+377 295 M
+(o_seconds\(\)) s
+377 287 M
+(    if "regen_margin" in yaml:) s
+377 279 M
+(      self.regen_margin = rpki.sundial.timedelta.parse\(yaml["regen_margin"]\).convert_t) s
+377 271 M
+(o_seconds\(\)) s
+377 263 M
+(    self.roa_requests = [roa_request.parse\(y\) for y in yaml.get\("roa_request", yaml.ge) s
+377 255 M
+(t\("route_origin", \(\)\)\)]) s
+377 247 M
+(    for r in self.roa_requests:) s
+377 239 M
+(      if r.v4:) s
+377 231 M
+(        self.base.v4 = self.base.v4.union\(r.v4.to_resource_set\(\)\)) s
+377 223 M
+(      if r.v6:) s
+377 215 M
+(        self.base.v6 = self.base.v6.union\(r.v6.to_resource_set\(\)\)) s
+377 207 M
+(    self.hosted_by = yaml.get\("hosted_by"\)) s
+377 199 M
+(    self.hosts = []) s
+377 191 M
+(    if not self.is_hosted:) s
+377 183 M
+(      self.engine = self.allocate_engine\(\)) s
+377 175 M
+(      self.rpkid_port = self.allocate_port\(\)) s
+377 167 M
+(      self.irdbd_port = self.allocate_port\(\)) s
+377 159 M
+(    if self.runs_pubd:) s
+377 151 M
+(      self.pubd_port  = self.allocate_port\(\)) s
+377 143 M
+(      self.rsync_port = self.allocate_port\(\)) s
+377 135 M
+(    if self.is_root:) s
+377 127 M
+(      self.rootd_port = self.allocate_port\(\)) s
+377 111 M
+(  def closure\(self\):) s
+377 103 M
+(    """) s
+377 95 M
+(    Compute resource closure of this node and its children, to avoid a) s
+377 87 M
+(    lot of tedious \(and error-prone\) duplication in the YAML file.) s
+377 79 M
+(    """) s
+377 71 M
+(    resources = self.base) s
+377 63 M
+(    for kid in self.kids:) s
+377 55 M
+(      resources = resources.union\(kid.closure\(\)\)) s
+377 47 M
+(    self.resources = resources) s
+377 39 M
+(    return resources) s
+377 23 M
+(  def dump\(self\):) s
+377 15 M
+(    """) s
+377 7 M
+(    Show content of this allocation node.) s
+_R
+S
+%%Page: (3) 3
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 3 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (3) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(    """) s
+5 503 M
+(    print str\(self\)) s
+5 487 M
+(  def __str__\(self\):) s
+5 479 M
+(    s = self.name + ":\\n") s
+5 471 M
+(    if self.resources.asn:      s += "  ASNs: %s\\n" % self.resources.asn) s
+5 463 M
+(    if self.resources.v4:       s += "  IPv4: %s\\n" % self.resources.v4) s
+5 455 M
+(    if self.resources.v6:       s += "  IPv6: %s\\n" % self.resources.v6) s
+5 447 M
+(    if self.kids:               s += "  Kids: %s\\n" % ", ".join\(k.name for k in self.k) s
+5 439 M
+(ids\)) s
+5 431 M
+(    if self.parent:             s += "    Up: %s\\n" % self.parent.name) s
+5 423 M
+(    if self.sia_base:           s += "   SIA: %s\\n" % self.sia_base) s
+5 415 M
+(    if self.is_hosted:          s += "  Host: %s\\n" % self.hosted_by.name) s
+5 407 M
+(    if self.hosts:              s += " Hosts: %s\\n" % ", ".join\(h.name for h in self.h) s
+5 399 M
+(osts\)) s
+5 391 M
+(    for r in self.roa_requests: s += "   ROA: %s\\n" % r) s
+5 383 M
+(    if not self.is_hosted:      s += " IPort: %s\\n" % self.irdbd_port) s
+5 375 M
+(    if self.runs_pubd:          s += " PPort: %s\\n" % self.pubd_port) s
+5 367 M
+(    if not self.is_hosted:      s += " RPort: %s\\n" % self.rpkid_port) s
+5 359 M
+(    if self.runs_pubd:          s += " SPort: %s\\n" % self.rsync_port) s
+5 351 M
+(    if self.is_root:            s += " TPort: %s\\n" % self.rootd_port) s
+5 343 M
+(    return s + " Until: %s\\n" % self.resources.valid_until) s
+5 327 M
+(  @property) s
+5 319 M
+(  def is_root\(self\):) s
+5 311 M
+(    """) s
+5 303 M
+(    Is this the root node?) s
+5 295 M
+(    """) s
+5 287 M
+(    return self.parent is None) s
+5 271 M
+(  @property) s
+5 263 M
+(  def is_hosted\(self\):) s
+5 255 M
+(    """) s
+5 247 M
+(    Is this entity hosted?) s
+5 239 M
+(    """) s
+5 231 M
+(    return self.hosted_by is not None) s
+5 215 M
+(  @property) s
+5 207 M
+(  def runs_pubd\(self\):) s
+5 199 M
+(    """) s
+5 191 M
+(    Does this entity run a pubd?) s
+5 183 M
+(    """) s
+5 175 M
+(    return self.is_root or not \(self.is_hosted or only_one_pubd\)) s
+5 159 M
+(  def path\(self, *names\):) s
+5 151 M
+(    """) s
+5 143 M
+(    Construct pathnames in this entity's test directory.) s
+5 135 M
+(    """) s
+5 127 M
+(    return cleanpath\(test_dir, self.host.name, *names\)) s
+5 111 M
+(  def csvout\(self, fn\):) s
+5 103 M
+(    """) s
+5 95 M
+(    Open and log a CSV output file.) s
+5 87 M
+(    """) s
+5 79 M
+(    path = self.path\(fn\)) s
+5 71 M
+(    print "Writing", path) s
+5 63 M
+(    return rpki.csv_utils.csv_writer\(path\)) s
+5 47 M
+(  def up_down_url\(self\):) s
+5 39 M
+(    """) s
+5 31 M
+(    Construct service URL for this node's parent.) s
+5 23 M
+(    """) s
+5 15 M
+(    parent_port = self.parent.hosted_by.rpkid_port if self.parent.is_hosted else self.) s
+5 7 M
+(parent.rpkid_port) s
+377 511 M
+(    return "http://localhost:%d/up-down/%s/%s" % \(parent_port, self.parent.name, self.) s
+377 503 M
+(name\)) s
+377 487 M
+(  def dump_asns\(self, fn\):) s
+377 479 M
+(    """) s
+377 471 M
+(    Write Autonomous System Numbers CSV file.) s
+377 463 M
+(    """) s
+377 455 M
+(    f = self.csvout\(fn\)) s
+377 447 M
+(    for k in self.kids:    ) s
+377 439 M
+(      f.writerows\(\(k.name, a\) for a in k.resources.asn\)) s
+377 431 M
+(    f.close\(\)) s
+377 423 M
+(    self.run_rpkic\("load_asns", fn\)) s
+377 407 M
+(  def dump_prefixes\(self, fn\):) s
+377 399 M
+(    """) s
+377 391 M
+(    Write prefixes CSV file.) s
+377 383 M
+(    """) s
+377 375 M
+(    f = self.csvout\(fn\)) s
+377 367 M
+(    for k in self.kids:) s
+377 359 M
+(      f.writerows\(\(k.name, p\) for p in \(k.resources.v4 + k.resources.v6\)\)) s
+377 351 M
+(    f.close\(\)) s
+377 343 M
+(    self.run_rpkic\("load_prefixes", fn\)) s
+377 327 M
+(  def dump_roas\(self, fn\):) s
+377 319 M
+(    """) s
+377 311 M
+(    Write ROA CSV file.) s
+377 303 M
+(    """) s
+377 295 M
+(    group = self.name if self.is_root else self.parent.name) s
+377 287 M
+(    f = self.csvout\(fn\)) s
+377 279 M
+(    for r in self.roa_requests:) s
+377 271 M
+(      f.writerows\(\(p, r.asn, group\)) s
+377 263 M
+(                  for p in \(r.v4 + r.v6 if r.v4 and r.v6 else r.v4 or r.v6 or \(\)\)\)) s
+377 255 M
+(    f.close\(\)) s
+377 247 M
+(    self.run_rpkic\("load_roa_requests", fn\)) s
+377 231 M
+(  @property) s
+377 223 M
+(  def pubd\(self\):) s
+377 215 M
+(    """) s
+377 207 M
+(    Walk up tree until we find somebody who runs pubd.) s
+377 199 M
+(    """) s
+377 191 M
+(    s = self) s
+377 183 M
+(    while not s.runs_pubd:) s
+377 175 M
+(      s = s.parent) s
+377 167 M
+(    return s) s
+377 151 M
+(  @property) s
+377 143 M
+(  def client_handle\(self\):) s
+377 135 M
+(    """) s
+377 127 M
+(    Work out what pubd configure_publication_client will call us.) s
+377 119 M
+(    """) s
+377 111 M
+(    path = []) s
+377 103 M
+(    s = self) s
+377 95 M
+(    while not s.runs_pubd:) s
+377 87 M
+(      path.append\(s\)) s
+377 79 M
+(      s = s.parent) s
+377 71 M
+(    path.append\(s\)) s
+377 63 M
+(    return ".".join\(i.name for i in reversed\(path\)\)) s
+377 47 M
+(  @property) s
+377 39 M
+(  def host\(self\):) s
+377 31 M
+(    return self.hosted_by or self) s
+377 15 M
+(  def dump_conf\(self, fn\):) s
+377 7 M
+(    """) s
+_R
+S
+%%Page: (4) 4
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 4 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (4) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(    Write configuration file for OpenSSL and RPKI tools.) s
+5 503 M
+(    """) s
+5 487 M
+(    r = { "handle"              : self.name,) s
+5 479 M
+(          "run_rpkid"           : str\(not self.is_hosted\),) s
+5 471 M
+(          "run_pubd"            : str\(self.runs_pubd\),) s
+5 463 M
+(          "run_rootd"           : str\(self.is_root\),) s
+5 455 M
+(          "irdbd_sql_database"  : "irdb%d" % self.engine,) s
+5 447 M
+(          "irdbd_sql_username"  : "irdb",) s
+5 439 M
+(          "rpkid_sql_database"  : "rpki%d" % self.engine,) s
+5 431 M
+(          "rpkid_sql_username"  : "rpki",) s
+5 423 M
+(          "rpkid_server_host"   : "localhost",) s
+5 415 M
+(          "rpkid_server_port"   : str\(self.rpkid_port\),) s
+5 407 M
+(          "irdbd_server_host"   : "localhost",) s
+5 399 M
+(          "irdbd_server_port"   : str\(self.irdbd_port\),) s
+5 391 M
+(          "rootd_server_port"   : str\(self.rootd_port\),) s
+5 383 M
+(          "pubd_sql_database"   : "pubd%d" % self.engine,) s
+5 375 M
+(          "pubd_sql_username"   : "pubd",) s
+5 367 M
+(          "pubd_server_host"    : "localhost",) s
+5 359 M
+(          "pubd_server_port"    : str\(self.pubd.pubd_port\),) s
+5 351 M
+(          "publication_rsync_server" : "localhost:%s" % self.pubd.rsync_port,) s
+5 343 M
+(          "bpki_servers_directory" : self.path\(\) }) s
+5 335 M
+(    ) s
+5 327 M
+(    r.update\(config_overrides\)) s
+5 311 M
+(    f = open\(self.path\(fn\), "w"\)) s
+5 303 M
+(    f.write\("# Automatically generated, do not edit\\n"\)) s
+5 295 M
+(    print "Writing", f.name) s
+5 279 M
+(    section = None) s
+5 271 M
+(    for line in open\(egrpkiconf\):) s
+5 263 M
+(      m = section_regexp.match\(line\)) s
+5 255 M
+(      if m:) s
+5 247 M
+(        section = m.group\(1\)) s
+5 239 M
+(      m = variable_regexp.match\(line\)) s
+5 231 M
+(      option = m.group\(1\) if m and section == "myrpki" else None) s
+5 223 M
+(      if option and option in r:) s
+5 215 M
+(        line = "%s = %s\\n" % \(option, r[option]\)) s
+5 207 M
+(      f.write\(line\)) s
+5 191 M
+(    f.close\(\)) s
+5 175 M
+(  def dump_rsyncd\(self, fn\):) s
+5 167 M
+(    """) s
+5 159 M
+(    Write rsyncd configuration file.) s
+5 151 M
+(    """) s
+5 135 M
+(    if self.runs_pubd:) s
+5 127 M
+(      f = open\(self.path\(fn\), "w"\)) s
+5 119 M
+(      print "Writing", f.name) s
+5 111 M
+(      f.writelines\(s + "\\n" for s in) s
+5 103 M
+(                   \("# Automatically generated, do not edit",) s
+5 95 M
+(                    "port         = %d"           % self.rsync_port,) s
+5 87 M
+(                    "address      = localhost",) s
+5 79 M
+(                    "[rpki]",) s
+5 71 M
+(                    "log file     = rsyncd.log",) s
+5 63 M
+(                    "read only    = yes",) s
+5 55 M
+(                    "use chroot   = no",) s
+5 47 M
+(                    "path         = %s"           % self.path\("publication"\),) s
+5 39 M
+(                    "comment      = RPKI test"\)\)) s
+5 31 M
+(      f.close\(\)) s
+5 15 M
+(  def run_rpkic\(self, *args\):) s
+5 7 M
+(    """) s
+377 511 M
+(    Run rpkic for this entity.) s
+377 503 M
+(    """) s
+377 495 M
+(    cmd = \(prog_rpkic, "-i", self.name, "-c", self.path\("rpki.conf"\)\) + args) s
+377 487 M
+(    print 'Running "%s"' % " ".join\(cmd\)) s
+377 479 M
+(    subprocess.check_call\(cmd, cwd = self.host.path\(\)\)) s
+377 463 M
+(  def run_python_daemon\(self, prog\):) s
+377 455 M
+(    """) s
+377 447 M
+(    Start a Python daemon and return a subprocess.Popen object) s
+377 439 M
+(    representing the running daemon.) s
+377 431 M
+(    """) s
+377 423 M
+(    cmd = \(prog, "-d", "-c", self.path\("rpki.conf"\)\)) s
+377 415 M
+(    log = os.path.splitext\(os.path.basename\(prog\)\)[0] + ".log") s
+377 407 M
+(    p = subprocess.Popen\(cmd,) s
+377 399 M
+(                         cwd = self.path\(\),) s
+377 391 M
+(                         stdout = open\(self.path\(log\), "w"\),) s
+377 383 M
+(                         stderr = subprocess.STDOUT\)) s
+377 375 M
+(    print 'Running %s for %s: pid %d process %r' % \(" ".join\(cmd\), self.name, p.pid, p) s
+377 367 M
+(\)) s
+377 359 M
+(    return p) s
+377 351 M
+(  ) s
+377 343 M
+(  def run_rpkid\(self\):) s
+377 335 M
+(    """) s
+377 327 M
+(    Run rpkid.) s
+377 319 M
+(    """) s
+377 311 M
+(    return self.run_python_daemon\(prog_rpkid\)) s
+377 295 M
+(  def run_irdbd\(self\):) s
+377 287 M
+(    """) s
+377 279 M
+(    Run irdbd.) s
+377 271 M
+(    """) s
+377 263 M
+(    return self.run_python_daemon\(prog_irdbd\)) s
+377 247 M
+(  def run_pubd\(self\):) s
+377 239 M
+(    """) s
+377 231 M
+(    Run pubd.) s
+377 223 M
+(    """) s
+377 215 M
+(    return self.run_python_daemon\(prog_pubd\)) s
+377 199 M
+(  def run_rootd\(self\):) s
+377 191 M
+(    """) s
+377 183 M
+(    Run rootd.) s
+377 175 M
+(    """) s
+377 167 M
+(    return self.run_python_daemon\(prog_rootd\)) s
+377 151 M
+(  def run_rsyncd\(self\):) s
+377 143 M
+(    """) s
+377 135 M
+(    Run rsyncd.) s
+377 127 M
+(    """) s
+377 119 M
+(    p = subprocess.Popen\(\("rsync", "--daemon", "--no-detach", "--config", "rsyncd.conf) s
+377 111 M
+("\),) s
+377 103 M
+(                         cwd = self.path\(\)\)) s
+377 95 M
+(    print "Running rsyncd for %s: pid %d process %r" % \(self.name, p.pid, p\)) s
+377 87 M
+(    return p) s
+377 71 M
+(os.environ["TZ"] = "UTC") s
+377 63 M
+(time.tzset\(\)) s
+377 47 M
+(cfg_file = None) s
+377 39 M
+(pidfile  = None) s
+377 31 M
+(keep_going = False) s
+377 23 M
+(skip_config = False) s
+377 7 M
+(opts, argv = getopt.getopt\(sys.argv[1:], "c:hkp:sm:?", ["config=", "help", "keep_going) s
+_R
+S
+%%Page: (5) 5
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 5 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (5) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 511 M
+(", "pidfile=", "skip_config", "machine="]\)) s
+5 503 M
+(for o, a in opts:) s
+5 495 M
+(  if o in \("-h", "--help", "-?"\):) s
+5 487 M
+(    print __doc__) s
+5 479 M
+(    sys.exit\(0\)) s
+5 471 M
+(  if o in \("-c", "--config"\):) s
+5 463 M
+(    cfg_file = a) s
+5 455 M
+(  elif o in \("-k", "--keep_going"\):) s
+5 447 M
+(    keep_going = True) s
+5 439 M
+(  elif o in \("-p", "--pidfile"\):) s
+5 431 M
+(    pidfile = a) s
+5 423 M
+(  elif o in \("-s", "--skip_config"\):) s
+5 415 M
+(    skip_config = True) s
+5 407 M
+(  elif o in \("-m", "--machine"\):) s
+5 399 M
+(    single_machine = True) s
+5 391 M
+(    single_machine_name = a) s
+5 375 M
+(# We can't usefully process more than one YAML file at a time, so) s
+5 367 M
+(# whine if there's more than one argument left.) s
+5 351 M
+(if len\(argv\) > 1:) s
+5 343 M
+(  raise rpki.exceptions.CommandParseFailure, "Unexpected arguments %r" % argv) s
+5 335 M
+(if len\(argv\) == 0:) s
+5 327 M
+(  raise rpki.exceptions.CommandParseFailure, "Yamlfile needed" ) s
+5 311 M
+(try:) s
+5 295 M
+(  if pidfile is not None:) s
+5 287 M
+(    open\(pidfile, "w"\).write\("%s\\n" % os.getpid\(\)\)) s
+5 271 M
+(  rpki.log.use_syslog = False) s
+5 263 M
+(  rpki.log.init\("yamltest"\)) s
+5 247 M
+(  yaml_file = argv[0] if argv else "smoketest.1.yaml") s
+5 231 M
+(  # Allow optional config file for this tool to override default) s
+5 223 M
+(  # passwords: this is mostly so that I can show a complete working) s
+5 215 M
+(  # example without publishing my own server's passwords.) s
+5 199 M
+(  cfg = rpki.config.parser\(cfg_file, "yamltest", allow_missing = True\)) s
+5 183 M
+(  only_one_pubd = cfg.getboolean\("only_one_pubd", True\)) s
+5 175 M
+(  allocation.base_port = cfg.getint\("base_port", 4400\)) s
+5 159 M
+(  config_overrides = dict\() s
+5 151 M
+(    \(k, cfg.get\(k\)\)) s
+5 143 M
+(    for k in \("rpkid_sql_password", "irdbd_sql_password", "pubd_sql_password",) s
+5 135 M
+(              "rpkid_sql_username", "irdbd_sql_username", "pubd_sql_username"\)) s
+5 127 M
+(    if cfg.has_option\(k\)\)) s
+5 111 M
+(  # Start clean) s
+5 95 M
+(  for root, dirs, files in os.walk\(test_dir, topdown = False\):) s
+5 87 M
+(    for file in files:) s
+5 79 M
+(      os.unlink\(os.path.join\(root, file\)\)) s
+5 71 M
+(    for dir in dirs:) s
+5 63 M
+(      os.rmdir\(os.path.join\(root, dir\)\)) s
+5 47 M
+(  # Read first YAML doc in file and process as compact description of) s
+5 39 M
+(  # test layout and resource allocations.  Ignore subsequent YAML docs,) s
+5 31 M
+(  # they're for smoketest.py, not this script.) s
+5 15 M
+(  db = allocation_db\(yaml.safe_load_all\(open\(yaml_file\)\).next\(\)\)) s
+377 511 M
+(  # Show what we loaded) s
+377 495 M
+(  db.dump\(\)) s
+377 479 M
+(  # Set up each entity in our test) s
+377 463 M
+(  for d in db:) s
+377 455 M
+(    if not d.is_hosted:) s
+377 447 M
+(      os.makedirs\(d.path\(\)\)) s
+377 439 M
+(      d.dump_conf\("rpki.conf"\)) s
+377 431 M
+(    if d.runs_pubd:) s
+377 423 M
+(      d.dump_rsyncd\("rsyncd.conf"\)) s
+377 407 M
+(  # Initialize BPKI and generate self-descriptor for each entity.) s
+377 391 M
+(  for d in db:) s
+377 383 M
+(    d.run_rpkic\("initialize"\)) s
+377 367 M
+(  # Create publication directories.) s
+377 351 M
+(  for d in db:) s
+377 343 M
+(    if d.is_root or d.runs_pubd:) s
+377 335 M
+(      os.makedirs\(d.path\("publication"\)\)) s
+377 319 M
+(  # Create RPKI root certificate.) s
+377 303 M
+(  print "Creating rootd RPKI root certificate") s
+377 287 M
+(  root_resources = rpki.resource_set.resource_bag\() s
+377 279 M
+(    asn = rpki.resource_set.resource_set_as\("0-4294967295"\),) s
+377 271 M
+(    v4  = rpki.resource_set.resource_set_ipv4\("0.0.0.0/0"\),) s
+377 263 M
+(    v6  = rpki.resource_set.resource_set_ipv6\("::/0"\)\)) s
+377 247 M
+(  root_key = rpki.x509.RSA.generate\(quiet = True\)) s
+377 231 M
+(  root_uri = "rsync://localhost:%d/rpki/" % db.root.pubd.rsync_port) s
+377 215 M
+(  root_sia = \(\(rpki.oids.name2oid["id-ad-caRepository"], \("uri", root_uri\)\),) s
+377 207 M
+(              \(rpki.oids.name2oid["id-ad-rpkiManifest"], \("uri", root_uri + "root.mnf") s
+377 199 M
+(\)\)\)) s
+377 183 M
+(  root_cert = rpki.x509.X509.self_certify\() s
+377 175 M
+(    keypair     = root_key,) s
+377 167 M
+(    subject_key = root_key.get_RSApublic\(\),) s
+377 159 M
+(    serial      = 1,) s
+377 151 M
+(    sia         = root_sia,) s
+377 143 M
+(    notAfter    = rpki.sundial.now\(\) + rpki.sundial.timedelta\(days = 365\),) s
+377 135 M
+(    resources   = root_resources\)) s
+377 119 M
+(  f = open\(db.root.path\("publication/root.cer"\), "wb"\)) s
+377 111 M
+(  f.write\(root_cert.get_DER\(\)\)) s
+377 103 M
+(  f.close\(\)) s
+377 87 M
+(  f = open\(db.root.path\("root.key"\), "wb"\)) s
+377 79 M
+(  f.write\(root_key.get_DER\(\)\)) s
+377 71 M
+(  f.close\(\)) s
+377 55 M
+(  # From here on we need to pay attention to initialization order.  We) s
+377 47 M
+(  # used to do all the pre-configure_daemons stuff before running any) s
+377 39 M
+(  # of the daemons, but that doesn't work right in hosted cases, so we) s
+377 31 M
+(  # have to interleave configuration with starting daemons, just as) s
+377 23 M
+(  # one would in the real world for this sort of thing.) s
+377 7 M
+(  progs = []) s
+_R
+S
+%%Page: (6) 6
+%%BeginPageSetup
+_S
+90 rotate
+24 -574 translate
+/pagenum 6 def
+/fname (ankgenrpki.py) def
+/fdir () def
+/ftail (ankgenrpki.py) def
+% User defined strings:
+/fmodstr (Tue May 08 11:13:59 2012) def
+/pagenumstr (6) def
+/user_header_p false def
+/user_footer_p false def
+%%EndPageSetup
+do_header
+5 503 M
+(  try:) s
+5 487 M
+(    for d in db:) s
+5 471 M
+(      print) s
+5 463 M
+(      print "Running daemons for", d.name) s
+5 455 M
+(      if d.is_root:) s
+5 447 M
+(        progs.append\(d.run_rootd\(\)\)) s
+5 439 M
+(      if not d.is_hosted:) s
+5 431 M
+(        progs.append\(d.run_irdbd\(\)\)) s
+5 423 M
+(        progs.append\(d.run_rpkid\(\)\)) s
+5 415 M
+(      if d.runs_pubd:) s
+5 407 M
+(        progs.append\(d.run_pubd\(\)\)) s
+5 399 M
+(        progs.append\(d.run_rsyncd\(\)\)) s
+5 383 M
+(    print) s
+5 375 M
+(    print "Giving daemons time to start up") s
+5 367 M
+(    time.sleep\(20\)) s
+5 359 M
+(    assert all\(p.poll\(\) is None for p in progs\)) s
+5 343 M
+(    if skip_config:) s
+5 327 M
+(      print "Skipping configure_*, you'll have to do that yourself") s
+5 311 M
+(    else:) s
+5 295 M
+(      for d in db:) s
+5 279 M
+(        print) s
+5 271 M
+(        print "Configuring", d.name) s
+5 263 M
+(        print) s
+5 255 M
+(        if  d.is_root:) s
+5 247 M
+(          assert not d.is_hosted) s
+5 239 M
+(          d.run_rpkic\("configure_publication_client",) s
+5 231 M
+(                      d.path\("%s.%s.repository-request.xml" % \(d.name, d.name\)\)\)) s
+5 223 M
+(          print) s
+5 215 M
+(          d.run_rpkic\("configure_repository",) s
+5 207 M
+(                      d.path\("%s.repository-response.xml" % d.client_handle\)\)) s
+5 199 M
+(          print) s
+5 191 M
+(        else:) s
+5 183 M
+(          d.parent.run_rpkic\("configure_child", d.path\("%s.identity.xml" % d.name\)\)) s
+5 175 M
+(          print) s
+5 167 M
+(          d.run_rpkic\("configure_parent",) s
+5 159 M
+(                      d.parent.path\("%s.%s.parent-response.xml" % \(d.parent.name, d.na) s
+5 151 M
+(me\)\)\)) s
+5 143 M
+(          print) s
+5 135 M
+(          d.pubd.run_rpkic\("configure_publication_client",) s
+5 127 M
+(                           d.path\("%s.%s.repository-request.xml" % \(d.name, d.parent.n) s
+5 119 M
+(ame\)\)\)) s
+5 111 M
+(          print) s
+5 103 M
+(          d.run_rpkic\("configure_repository",) s
+5 95 M
+(                      d.pubd.path\("%s.repository-response.xml" % d.client_handle\)\)) s
+5 87 M
+(          print) s
+5 71 M
+(    # Load all the CSV files) s
+5 63 M
+(    for d in db:) s
+5 55 M
+(        d.dump_asns\("%s.asns.csv" % d.name\)) s
+5 47 M
+(        d.dump_prefixes\("%s.prefixes.csv" % d.name\)) s
+5 39 M
+(        d.dump_roas\("%s.roas.csv" % d.name\)) s
+5 23 M
+(    print "Done initializing daemons") s
+5 7 M
+(    # Wait until something terminates.) s
+377 503 M
+(    signal.signal\(signal.SIGCHLD, lambda *dont_care: None\)) s
+377 495 M
+(    while \(any\(p.poll\(\) is None for p in progs\)) s
+377 487 M
+(           if keep_going else) s
+377 479 M
+(           all\(p.poll\(\) is None for p in progs\)\):) s
+377 471 M
+(      signal.pause\(\)) s
+377 455 M
+(  finally:) s
+377 439 M
+(    # Shut everything down.) s
+377 423 M
+(    signal.signal\(signal.SIGCHLD, signal.SIG_DFL\)) s
+377 415 M
+(    for p in progs:) s
+377 407 M
+(      if p.poll\(\) is None:) s
+377 399 M
+(        os.kill\(p.pid, signal.SIGTERM\)) s
+377 391 M
+(      print "Program pid %d %r returned %d" % \(p.pid, p, p.wait\(\)\)) s
+377 375 M
+(finally:) s
+377 367 M
+(  if pidfile is not None:) s
+377 359 M
+(    os.unlink\(pidfile\)) s
+_R
+S
+%%Trailer
+%%Pages: 6
+%%DocumentNeededResources: font Courier-Bold Courier 
+%%EOF
